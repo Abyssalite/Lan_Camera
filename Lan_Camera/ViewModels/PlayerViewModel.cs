@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -13,8 +14,8 @@ namespace Lan_Camera.ViewModels;
 public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
 {
     public Camera? SelectedCamera { get; }
-    public string? View { set; get; }
-    public string? WebRtcUrl { set; get; }
+    [ObservableProperty]
+    private string? _view = "none";
 
     private enum Selection
     {
@@ -24,7 +25,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
     }
     private int _viewSelect = 0;
 
-    private bool? _toggleCamera  = true;
+    private bool? _toggleCamera  = false;
     public bool? ToggleCamera 
     { 
         get => _toggleCamera;
@@ -37,10 +38,26 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
             OnPropertyChanged(nameof(ToggleCamera));
         }
     }
+    private bool? _togglePlay  = false;
+    public bool? TogglePlay
+    { 
+        get => _togglePlay;
+        set
+        {
+            if (value == null || value == _togglePlay) return;
+
+            _togglePlay = value;
+            if (_togglePlay ?? false) StartPlay();
+            else StopPlay();
+            OnPropertyChanged(nameof(TogglePlay));
+        }
+    }
 
     public ICommand? SwitchCamCommand { get; }
     
     private readonly HttpClient _http = new();
+    private Process? _ffplay;
+    private string _rtspUrl = "";
     private string _baseUrl = "";
     public PlayerViewModel(
         Store store,
@@ -53,20 +70,59 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
         if (SelectedCamera == null) return;
 
         var address = SelectedCamera.Address.Trim();
-        WebRtcUrl = $"http://{address}:8889/cam/";
+        _rtspUrl = $"rtsp://{address}:8554/cam";
         _baseUrl = $"http://{address}:5000";
 
         SwitchCamCommand = new AsyncRelayCommand(SwitchCamAsync);
-        Reload();
     }
 
-    private void Reload()
+private void StartPlay()
     {
-        // Force WebView to reload
-        var url = WebRtcUrl;
-        WebRtcUrl = null;
-        WebRtcUrl = url;
-        Console.WriteLine(WebRtcUrl);
+        StopPlay();
+
+        if (string.IsNullOrWhiteSpace(_rtspUrl))
+        {
+            return;
+        }
+
+        try
+        {
+            _ffplay = Process.Start(new ProcessStartInfo
+            {
+                FileName = "ffplay",
+                Arguments =
+                    $"-rtsp_transport tcp " +
+                    $"-fflags nobuffer " +
+                    $"-flags low_delay " +
+                    $"-sync ext " +
+                    $"-window_title \"LAN Camera\" " +
+                    $"\"{_rtspUrl}\"",
+                UseShellExecute = false,
+                CreateNoWindow = false
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ffplay failed: {ex.Message}");
+        }
+    }
+
+    private void StopPlay()
+    {
+        if (_ffplay != null)
+        {
+            try
+            {
+                if (!_ffplay.HasExited)
+                    _ffplay.Kill(entireProcessTree: true);
+            }
+            catch { /* ignore */ }
+            finally
+            {
+                _ffplay.Dispose();
+                _ffplay = null;
+            }
+        }
     }
 
     private async Task SwitchCamAsync()
@@ -77,8 +133,8 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
             var response = await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
             View = $"{(Selection)_viewSelect}";
 
-            await Task.Delay(1000); // give server time to restart pipeline
-            Reload();
+            await Task.Delay(2000); // give server time to restart pipeline
+            StartPlay();
         }
         catch (Exception ex)
         {
@@ -90,19 +146,20 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
     {
         try
         {
-            if (isCameraOn)
-            {
+            if (!isCameraOn)
+            {               
+                TogglePlay = false;
                 // Turn off
-                await _http.GetAsync($"{_baseUrl}/switch?cam=off");
-                WebRtcUrl = null;;
+                await _http.GetAsync($"{_baseUrl}/switch?cam=none");
+                View = "none";
             }
             else
             {
                 await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
                 View = $"{(Selection)_viewSelect}";
 
-                await Task.Delay(1000);
-                Reload();
+                await Task.Delay(2000);
+                StartPlay();
             }
         }
         catch (Exception ex)
@@ -113,6 +170,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
 
     private async Task ClearAsync()
     {
+        StopPlay();
         _http.Dispose();
         _store.SelectCamera(null);
     }

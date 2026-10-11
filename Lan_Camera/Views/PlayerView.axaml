@@ -60,12 +60,21 @@
             VerticalAlignment="Center" 
             CornerRadius="10" 
             Margin="80 0" 
-            Background="#3333"
             ClipToBounds="True">
             
-            <NativeWebView Source="{Binding WebRtcUrl}"
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch" />
+            <ToggleButton Content="Play" 
+                    Width="150" 
+                    Height="60" 
+                    Padding="10"
+                    Margin="10"
+                    VerticalAlignment="Center" 
+                    HorizontalAlignment="Center" 
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Transparent"
+                    Background="#FAAA"
+                    IsEnabled="{Binding ToggleCamera}"
+                    IsChecked="{Binding TogglePlay, Mode=TwoWay}" /> 
         </Border>
 
 
@@ -80,7 +89,7 @@
                 Margin="0 10 0 0">
 
                 <Button Content="Switch Camera" 
-                    Width="110" 
+                    Width="150" 
                     Height="40" 
                     Padding="10"
                     Margin="10"
@@ -88,9 +97,10 @@
                     VerticalContentAlignment="Center"
                     BorderBrush="Transparent"
                     Background="#FAAA"
+                    IsEnabled="{Binding ToggleCamera}"
                     Command="{Binding SwitchCamCommand}" />
                 <ToggleButton Content="Toggle Camera" 
-                    Width="110" 
+                    Width="150" 
                     Height="40" 
                     Padding="10"
                     Margin="10"
