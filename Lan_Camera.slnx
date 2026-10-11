@@ -1,0 +1,11 @@
+﻿<Solution>
+  <Project Path="Lan_Camera.Android/Lan_Camera.Android.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="Lan_Camera.Browser/Lan_Camera.Browser.csproj" />
+  <Project Path="Lan_Camera.Desktop/Lan_Camera.Desktop.csproj" />
+  <Project Path="Lan_Camera.iOS/Lan_Camera.iOS.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="Lan_Camera/Lan_Camera.csproj" />
+</Solution>
