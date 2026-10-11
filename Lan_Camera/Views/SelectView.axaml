@@ -1,0 +1,82 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Lan_Camera.ViewModels"
+             x:Class="Lan_Camera.Views.SelectView"
+             x:DataType="vm:SelectViewModel">
+
+	<Border x:Name="CameraSelectBorder" VerticalAlignment="Center" CornerRadius="10" Background="#3333" IsVisible="False">
+		<Grid x:Name="CameraSelectStack" 
+			HorizontalAlignment="Center"
+			VerticalAlignment="Center" >	
+                <ListBox x:Name="CameraSelectListBox"
+					ItemsSource="{Binding CamerasList}"
+					HorizontalAlignment="Stretch" 
+					VerticalAlignment="Center" 
+                    SelectionMode="Single"
+					Background="Transparent"
+					ScrollViewer.HorizontalScrollBarVisibility="Auto"
+					ScrollViewer.VerticalScrollBarVisibility="Auto"
+                    SelectedItem="{Binding $parent[UserControl].((vm:SelectViewModel)DataContext)?.SelectedCamera, Mode=TwoWay}">
+					<ListBox.Styles>
+						<Style Selector="ListBox.vertical">
+							<Setter Property="ItemsPanel">
+								<ItemsPanelTemplate>
+									<StackPanel Orientation="Vertical"/>
+								</ItemsPanelTemplate>
+							</Setter>
+						</Style>
+
+						<Style Selector="ListBox.horizontal">
+							<Setter Property="ItemsPanel">
+								<ItemsPanelTemplate>
+									<StackPanel Orientation="Horizontal"/>
+								</ItemsPanelTemplate>
+							</Setter>
+						</Style>
+					</ListBox.Styles>
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+								<Border
+									Width="160"
+									Height="80"
+									CornerRadius="20"
+									Background="gray">
+									<TextBlock Text="{Binding Name}" 
+										HorizontalAlignment="Center" 
+										VerticalAlignment="Center" 
+										FontSize="14" />
+								</Border>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>   
+
+			 <!--<Button x:Name="BluetoothCommandButton"
+				Content="BLE Camera Add" 
+				HorizontalAlignment="Center" 
+				VerticalAlignment="Center" 
+				HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+				Height="80"
+				Width="160"
+				CornerRadius="20"
+				Command="{Binding BluetoothCommand}" />-->
+
+			<Button x:Name="AddCameraCommandButton"
+				Content="Add Manually" 
+				HorizontalAlignment="Center" 
+				VerticalAlignment="Center" 
+				HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+				Height="80"
+				Width="160"
+				CornerRadius="20"
+				Command="{Binding AddCameraCommand}" />
+		</Grid>
+	</Border>
+
+</UserControl>

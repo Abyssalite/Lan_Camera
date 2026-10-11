@@ -1,7 +1,9 @@
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Custom_EventHub;
 using Custom_Navigation;
 using Custom_Popup;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Lan_Camera.ViewModels;
 
@@ -22,5 +24,15 @@ public partial class MainViewModel : ViewModelBase
     {
         _viewhost = viewHost;
         _popuphost = popup;
+
+        _ = InitializeAsync();
+    }
+
+    public async Task InitializeAsync()
+    {        
+        _store.CamerasList = await Helpers.LoadAsync() ?? [];
+
+        var vm = App.Services?.GetRequiredService<SelectViewModel>();
+        await _navigator.NavigateMain(vm); 
     }
 }

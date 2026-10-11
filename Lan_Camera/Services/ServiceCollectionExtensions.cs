@@ -8,5 +8,8 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<Store>();
 
         collection.AddTransient<MainViewModel>();
+        collection.AddTransient<PlayerViewModel>();
+        collection.AddTransient<SelectViewModel>();
+        collection.AddTransient<AddCameraViewModel>();
     }
 }

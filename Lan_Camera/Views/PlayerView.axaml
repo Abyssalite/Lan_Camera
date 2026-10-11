@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Lan_Camera.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="800"
+             x:Class="Lan_Camera.Views.PlayerView"
+             x:DataType="vm:PlayerViewModel">
+
+	    <Grid RowDefinitions="Auto,*,Auto">
+        <Border Grid.Row="0" 
+            HorizontalAlignment="Stretch" 
+            CornerRadius="10" 
+            Background="#3333">
+
+            <Grid ColumnDefinitions="Auto,*">		
+                <Button
+                    Grid.Column="0"
+                    Width="40" 
+                    Height="40" 
+                    Padding="10"
+                    Margin="10"
+                    CornerRadius="30"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Transparent"
+                    Background="#FAAA"
+                    Command="{Binding BackCommand}">
+                    <Image Source="avares://Lan_Camera/Assets/icons8-back-100.png"
+                        Stretch="Uniform"
+                        Width="50"
+                        Height="50" />
+                </Button>   
+
+                <StackPanel Grid.Column="1" 
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center"
+                    Margin="0 0 0 20">
+
+                    <TextBlock  Text="{Binding SelectedCamera.Name}" 
+                        FontSize="30"
+                        HorizontalAlignment="Center" />
+                        
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock  Text="{Binding SelectedCamera.Address}" 
+                            FontSize="22"
+                            Margin="5" />
+                        <TextBlock  Text="{Binding View}" 
+                            FontSize="22"
+                            Margin="5" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>   
+        </Border>
+
+        <Border 
+            Grid.Row="1" 
+            VerticalAlignment="Center" 
+            CornerRadius="10" 
+            Margin="80 0" 
+            Background="#3333"
+            ClipToBounds="True">
+            
+            <NativeWebView Source="{Binding WebRtcUrl}"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch" />
+        </Border>
+
+
+        <Border Grid.Row="2" 
+            HorizontalAlignment="Stretch" 
+            CornerRadius="10" 
+            Background="#3333">
+
+            <StackPanel Orientation="Horizontal"
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center"
+                Margin="0 10 0 0">
+
+                <Button Content="Switch Camera" 
+                    Width="110" 
+                    Height="40" 
+                    Padding="10"
+                    Margin="10"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Transparent"
+                    Background="#FAAA"
+                    Command="{Binding SwitchCamCommand}" />
+                <ToggleButton Content="Toggle Camera" 
+                    Width="110" 
+                    Height="40" 
+                    Padding="10"
+                    Margin="10"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Transparent"
+                    Background="#FAAA"
+                    IsChecked="{Binding ToggleCamera, Mode=TwoWay}" />            
+            </StackPanel> 
+        </Border>
+    </Grid>
+</UserControl>
