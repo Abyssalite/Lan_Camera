@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
              xmlns:vm="using:Lan_Camera.ViewModels"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="800"
              x:Class="Lan_Camera.Views.PlayerView"
@@ -57,24 +58,17 @@
 
         <Border 
             Grid.Row="1" 
-            VerticalAlignment="Center" 
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch" 
             CornerRadius="10" 
             Margin="80 0" 
             ClipToBounds="True">
             
-            <ToggleButton Content="Play" 
-                    Width="150" 
-                    Height="60" 
-                    Padding="10"
-                    Margin="10"
-                    VerticalAlignment="Center" 
-                    HorizontalAlignment="Center" 
-                    HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center"
-                    BorderBrush="Transparent"
-                    Background="#FAAA"
-                    IsEnabled="{Binding ToggleCamera}"
-                    IsChecked="{Binding TogglePlay, Mode=TwoWay}" /> 
+            <vlc:VideoView
+                x:Name="VlcView"
+                MediaPlayer="{Binding MediaPlayer}"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch" />
         </Border>
 
 

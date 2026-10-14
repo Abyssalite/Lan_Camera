@@ -1,6 +1,6 @@
 using System;
-using System.Diagnostics;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Custom_EventHub;
 using Custom_Navigation;
 using Custom_Popup;
+using LibVLCSharp.Shared;
 
 namespace Lan_Camera.ViewModels;
 
@@ -16,12 +17,15 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
     public Camera? SelectedCamera { get; }
     [ObservableProperty]
     private string? _view = "none";
+    private readonly HttpClient _http = new();
+    private LibVLC? _libVLC;
+    private MediaPlayer? _mediaPlayer;
+    public MediaPlayer? MediaPlayer => _mediaPlayer;
 
     private enum Selection
     {
         front,
-        back,
-        middle
+        back
     }
     private int _viewSelect = 0;
 
@@ -38,7 +42,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
             OnPropertyChanged(nameof(ToggleCamera));
         }
     }
-    private bool? _togglePlay  = false;
+    /*private bool? _togglePlay  = false;
     public bool? TogglePlay
     { 
         get => _togglePlay;
@@ -47,16 +51,14 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
             if (value == null || value == _togglePlay) return;
 
             _togglePlay = value;
-            if (_togglePlay ?? false) StartPlay();
-            else StopPlay();
+            if (_togglePlay ?? false) Play();
+            else Stop();
             OnPropertyChanged(nameof(TogglePlay));
         }
-    }
+    }*/
 
     public ICommand? SwitchCamCommand { get; }
     
-    private readonly HttpClient _http = new();
-    private Process? _ffplay;
     private string _rtspUrl = "";
     private string _baseUrl = "";
     public PlayerViewModel(
@@ -74,67 +76,55 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
         _baseUrl = $"http://{address}:5000";
 
         SwitchCamCommand = new AsyncRelayCommand(SwitchCamAsync);
+        InitPlayer();
+    }
+    
+    private void InitPlayer()
+    {
+        Core.Initialize();
+        _libVLC = new LibVLC(
+            "--no-audio",
+            "--network-caching=1000",
+            "--avcodec-hw=any"
+        );
+        _mediaPlayer = new MediaPlayer(_libVLC);
     }
 
-private void StartPlay()
+    private void PlayAsync()
     {
-        StopPlay();
+        if (_mediaPlayer == null || _libVLC == null) return;
 
-        if (string.IsNullOrWhiteSpace(_rtspUrl))
-        {
-            return;
-        }
-
-        try
-        {
-            _ffplay = Process.Start(new ProcessStartInfo
-            {
-                FileName = "ffplay",
-                Arguments =
-                    $"-rtsp_transport tcp " +
-                    $"-fflags nobuffer " +
-                    $"-flags low_delay " +
-                    $"-sync ext " +
-                    $"-window_title \"LAN Camera\" " +
-                    $"\"{_rtspUrl}\"",
-                UseShellExecute = false,
-                CreateNoWindow = false
-            });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"ffplay failed: {ex.Message}");
-        }
+        using var media = new Media(_libVLC, _rtspUrl, FromType.FromLocation);
+        media.AddOption(":rtsp-tcp");
+        media.AddOption(":network-caching=1000");
+        _mediaPlayer.Play(media);
     }
 
-    private void StopPlay()
+    private void Stop()
     {
-        if (_ffplay != null)
-        {
-            try
-            {
-                if (!_ffplay.HasExited)
-                    _ffplay.Kill(entireProcessTree: true);
-            }
-            catch { /* ignore */ }
-            finally
-            {
-                _ffplay.Dispose();
-                _ffplay = null;
-            }
-        }
+        if (_mediaPlayer == null) return;
+        _mediaPlayer.Stop();
     }
 
     private async Task SwitchCamAsync()
     {
         try
         {
-            _viewSelect = (_viewSelect + 1) % 3;
+            _viewSelect = (_viewSelect + 1) % 2;
             var response = await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
             View = $"{(Selection)_viewSelect}";
 
-            await Task.Delay(2000); // give server time to restart pipeline
-            StartPlay();
+            string body = "";
+            do
+            {
+                var status = await _http.GetAsync($"{_baseUrl}/status");
+                status.EnsureSuccessStatusCode();
+                body = await status.Content.ReadAsStringAsync(); 
+                Console.WriteLine(body);
+                await Task.Delay(200);
+            }
+            while (JsonSerializer.Deserialize<Respond>(body)?.Ready != true);
+            PlayAsync();
         }
         catch (Exception ex)
         {
@@ -148,8 +138,7 @@ private void StartPlay()
         {
             if (!isCameraOn)
             {               
-                TogglePlay = false;
-                // Turn off
+                Stop();
                 await _http.GetAsync($"{_baseUrl}/switch?cam=none");
                 View = "none";
             }
@@ -158,8 +147,17 @@ private void StartPlay()
                 await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
                 View = $"{(Selection)_viewSelect}";
 
-                await Task.Delay(2000);
-                StartPlay();
+                string body = "";
+                do
+                {
+                    var status = await _http.GetAsync($"{_baseUrl}/status");
+                    status.EnsureSuccessStatusCode();
+                    body = await status.Content.ReadAsStringAsync(); 
+                    Console.WriteLine(body);
+                    await Task.Delay(200);
+                }
+                while (JsonSerializer.Deserialize<Respond>(body)?.Ready != true);
+                PlayAsync();
             }
         }
         catch (Exception ex)
@@ -170,7 +168,9 @@ private void StartPlay()
 
     private async Task ClearAsync()
     {
-        StopPlay();
+        _mediaPlayer?.Stop();
+        _mediaPlayer?.Dispose();
+        _libVLC?.Dispose();
         _http.Dispose();
         _store.SelectCamera(null);
     }
