@@ -6,6 +6,8 @@ using Lan_Camera.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Custom_Navigation;
 using Custom_EventHub;
+using System.Threading.Tasks;
+using LibVLCSharp.Shared;
 
 namespace Lan_Camera;
 
@@ -23,6 +25,8 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        _ = Task.Run(() => Core.Initialize());
+
         // Register all the services needed for the application to run
         IServiceCollection collection = new ServiceCollection();
         collection.AddCommonServices();

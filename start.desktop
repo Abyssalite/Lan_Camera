@@ -2,7 +2,7 @@
 set -e
 
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
-VLC_DIR="$APP_DIR/libvlc"
+VLC_DIR="$APP_DIR/libvlc/linux"
 
 export LD_LIBRARY_PATH="$VLC_DIR"
 export VLC_PLUGIN_PATH="$VLC_DIR/plugins"

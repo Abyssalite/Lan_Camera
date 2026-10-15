@@ -61,7 +61,6 @@
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch" 
             CornerRadius="10" 
-            Margin="80 0" 
             ClipToBounds="True">
             
             <vlc:VideoView

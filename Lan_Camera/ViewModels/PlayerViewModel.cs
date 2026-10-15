@@ -81,7 +81,6 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
     
     private void InitPlayer()
     {
-        Core.Initialize();
         _libVLC = new LibVLC(
             "--no-audio",
             "--network-caching=1000",
@@ -104,6 +103,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
     {
         if (_mediaPlayer == null) return;
         _mediaPlayer.Stop();
+        OnPropertyChanged(nameof(MediaPlayer));
     }
 
     private async Task SwitchCamAsync()
@@ -168,8 +168,8 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
 
     private async Task ClearAsync()
     {
-        _mediaPlayer?.Stop();
-        _mediaPlayer?.Dispose();
+        Stop();
+        _mediaPlayer = null;
         _libVLC?.Dispose();
         _http.Dispose();
         _store.SelectCamera(null);
