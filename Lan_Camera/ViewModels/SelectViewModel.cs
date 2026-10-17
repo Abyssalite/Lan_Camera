@@ -8,6 +8,8 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Custom_Popup;
 
+using Lan_Camera.Service;
+using System;
 namespace Lan_Camera.ViewModels;
 
 public partial class SelectViewModel : ViewModelBase
@@ -55,7 +57,9 @@ public partial class SelectViewModel : ViewModelBase
     {
         _store.SelectCamera(camera);
 
-        var vm = App.Services?.GetRequiredService<PlayerViewModel>();
+        var vm = App.Services?.GetRequiredService<IPlayerViewModel>();
+        Console.WriteLine(App.Services?.GetRequiredService<IPlayerViewModel>());
+
         await _navigator.NavigateMain(vm);     
     }
 }

@@ -3,9 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
-             xmlns:vm="using:Lan_Camera.ViewModels"
+             xmlns:vm="using:Lan_Camera.Desktop.ViewModels"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="800"
-             x:Class="Lan_Camera.Views.PlayerView"
+             x:Class="Lan_Camera.Desktop.Views.PlayerView"
              x:DataType="vm:PlayerViewModel">
 
 	    <Grid RowDefinitions="Auto,*,Auto">

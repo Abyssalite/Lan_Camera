@@ -19,10 +19,16 @@ public class ViewLocator : IDataTemplate
         if (param is null)
             return null;
 
-        var name = param.GetType().FullName!.Replace("ViewModel", "View", StringComparison.Ordinal);
-        var type = Type.GetType(name);
+        var name = param.GetType().FullName!
+            .Replace("ViewModel", "View", StringComparison.Ordinal);
 
-        if (type != null)
+        // Search the ViewModel's assembly first
+        var type = param.GetType().Assembly.GetType(name);
+
+        // If not found, search App.Desktop
+        type ??= typeof(ViewLocator).Assembly.GetType(name);
+
+        if (type is not null)
         {
             return (Control)Activator.CreateInstance(type)!;
         }

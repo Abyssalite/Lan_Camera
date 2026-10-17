@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="LibVLCSharp" />
     <PackageReference Include="LibVLCSharp.Avalonia" />
     <PackageReference Include="VideoLAN.LibVLC.Windows" />
   </ItemGroup>

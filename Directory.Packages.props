@@ -22,5 +22,8 @@
     <PackageVersion Include="VideoLAN.LibVLC.Android" Version="3.6.5" />
     <PackageVersion Include="VideoLAN.LibVLC.Windows" Version="3.0.24" />
     <PackageVersion Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.15" />
+    <PackageVersion Include="Xamarin.AndroidX.Media3.Common" Version="1.11.1" />
+    <PackageVersion Include="Xamarin.AndroidX.Media3.ExoPlayer" Version="1.11.1" />
+    <PackageVersion Include="Xamarin.AndroidX.Media3.Ui" Version="1.11.1" />
   </ItemGroup>
 </Project>

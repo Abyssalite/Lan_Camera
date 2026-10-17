@@ -1,8 +1,7 @@
 
-using Avalonia;
 using Avalonia.Controls;
 
-namespace Lan_Camera.Views;
+namespace Lan_Camera.Desktop.Views;
 
 public partial class PlayerView : UserControl
 {

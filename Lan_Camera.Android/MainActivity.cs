@@ -8,7 +8,7 @@ using Custom_Navigation;
 namespace Lan_Camera.Android;
 
 [Activity(
-    Label = "Lan_Camera.Android",
+    Label = "Lan Camera",
     Theme = "@style/MyTheme.NoActionBar",
     Icon = "@drawable/icon",
     MainLauncher = true,

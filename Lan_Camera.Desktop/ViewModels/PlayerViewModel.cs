@@ -10,9 +10,11 @@ using Custom_Navigation;
 using Custom_Popup;
 using LibVLCSharp.Shared;
 
-namespace Lan_Camera.ViewModels;
+using Lan_Camera.ViewModels;
+using Lan_Camera.Service;
+namespace Lan_Camera.Desktop.ViewModels;
 
-public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
+public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IPlayerViewModel
 {
     public Camera? SelectedCamera { get; }
     [ObservableProperty]
@@ -25,7 +27,8 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
     private enum Selection
     {
         front,
-        back
+        back,
+        center
     }
     private int _viewSelect = 0;
 
@@ -110,7 +113,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation
     {
         try
         {
-            _viewSelect = (_viewSelect + 1) % 2;
+            _viewSelect = (_viewSelect + 1) % Enum.GetNames(typeof(Selection)).Length;
             var response = await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
             View = $"{(Selection)_viewSelect}";
 
