@@ -45,23 +45,10 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
             OnPropertyChanged(nameof(ToggleCamera));
         }
     }
-    /*private bool? _togglePlay  = false;
-    public bool? TogglePlay
-    { 
-        get => _togglePlay;
-        set
-        {
-            if (value == null || value == _togglePlay) return;
-
-            _togglePlay = value;
-            if (_togglePlay ?? false) Play();
-            else Stop();
-            OnPropertyChanged(nameof(TogglePlay));
-        }
-    }*/
 
     public ICommand? SwitchCamCommand { get; }
-    
+    public ICommand? ReloadCommand { get; }
+
     private string _rtspUrl = "";
     private string _baseUrl = "";
     public PlayerViewModel(
@@ -79,6 +66,8 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
         _baseUrl = $"http://{address}:5000";
 
         SwitchCamCommand = new AsyncRelayCommand(SwitchCamAsync);
+        ReloadCommand = new AsyncRelayCommand(ReloadAsync);
+
         InitPlayer();
     }
     
@@ -86,20 +75,11 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
     {
         _libVLC = new LibVLC(
             "--no-audio",
+            "--quiet",
             "--network-caching=1000",
             "--avcodec-hw=any"
         );
         _mediaPlayer = new MediaPlayer(_libVLC);
-    }
-
-    private void PlayAsync()
-    {
-        if (_mediaPlayer == null || _libVLC == null) return;
-
-        using var media = new Media(_libVLC, _rtspUrl, FromType.FromLocation);
-        media.AddOption(":rtsp-tcp");
-        media.AddOption(":network-caching=1000");
-        _mediaPlayer.Play(media);
     }
 
     private void Stop()
@@ -109,13 +89,44 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
         OnPropertyChanged(nameof(MediaPlayer));
     }
 
+    private void Play()
+    {
+        Stop();
+        if (_mediaPlayer == null || _libVLC == null) return;
+
+        using var media = new Media(_libVLC, _rtspUrl, FromType.FromLocation);
+        media.AddOption(":rtsp-tcp");
+        media.AddOption(":network-caching=1000");
+        _mediaPlayer.Play(media);
+    }
+
+    private async Task ReloadAsync()
+    {
+        try
+        {
+            var status = await _http.GetAsync($"{_baseUrl}/status");
+            status.EnsureSuccessStatusCode();
+            var body = await status.Content.ReadAsStringAsync(); 
+            Console.WriteLine(body);
+            
+            View = $"{JsonSerializer.Deserialize<Respond>(body)?.Current ?? "none"}";
+            if (Enum.TryParse<Selection>(View, out var s))
+                _viewSelect = (int)s;
+            
+            Play();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Reload failed: {ex.Message}");
+        }
+    }
+
     private async Task SwitchCamAsync()
     {
         try
         {
             _viewSelect = (_viewSelect + 1) % Enum.GetNames(typeof(Selection)).Length;
             var response = await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
-            View = $"{(Selection)_viewSelect}";
 
             string body = "";
             do
@@ -127,7 +138,8 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
                 await Task.Delay(200);
             }
             while (JsonSerializer.Deserialize<Respond>(body)?.Ready != true);
-            PlayAsync();
+            View = $"{(Selection)_viewSelect}";
+            Play();
         }
         catch (Exception ex)
         {
@@ -148,7 +160,6 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
             else
             {
                 await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
-                View = $"{(Selection)_viewSelect}";
 
                 string body = "";
                 do
@@ -160,7 +171,8 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
                     await Task.Delay(200);
                 }
                 while (JsonSerializer.Deserialize<Respond>(body)?.Ready != true);
-                PlayAsync();
+                View = $"{(Selection)_viewSelect}";
+                Play();
             }
         }
         catch (Exception ex)
@@ -171,10 +183,18 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
 
     private async Task ClearAsync()
     {
-        Stop();
-        _mediaPlayer = null;
-        _libVLC?.Dispose();
-        _http.Dispose();
+        try
+        {
+            await _http.GetAsync($"{_baseUrl}/switch?cam=none");
+            Stop();
+            _mediaPlayer = null;
+            _libVLC?.Dispose();
+            _http.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Clear failed: {ex.Message}");
+        }
         _store.SelectCamera(null);
     }
 

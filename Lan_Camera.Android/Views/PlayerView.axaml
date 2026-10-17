@@ -1,0 +1,116 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Lan_Camera.Android.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="800"
+             xmlns:controls="using:Lan_Camera.Android.Controls"
+             x:Class="Lan_Camera.Android.Views.PlayerView"
+             x:DataType="vm:PlayerViewModel">
+
+	    <Grid RowDefinitions="Auto,*,Auto">
+        <Border Grid.Row="0" 
+            HorizontalAlignment="Stretch" 
+            CornerRadius="10" 
+            Background="#3333">
+
+            <Grid ColumnDefinitions="Auto,*">		
+                <Button
+                    Grid.Column="0"
+                    Width="40" 
+                    Height="40" 
+                    Padding="10"
+                    Margin="10"
+                    CornerRadius="30"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Transparent"
+                    Background="#FAAA"
+                    Command="{Binding BackCommand}">
+                    <Image Source="avares://Lan_Camera/Assets/icons8-back-100.png"
+                        Stretch="Uniform"
+                        Width="50"
+                        Height="50" />
+                </Button>   
+
+                <StackPanel Grid.Column="1" 
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center"
+                    Margin="0 0 0 10">
+
+                    <TextBlock  Text="{Binding SelectedCamera.Name}" 
+                        FontSize="24"
+                        HorizontalAlignment="Center" />
+                        
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock  Text="{Binding SelectedCamera.Address}" 
+                            FontSize="18"
+                            Margin="5" />
+                        <TextBlock  Text="{Binding View}" 
+                            FontSize="18"
+                            Margin="5" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>   
+        </Border>
+
+        <Border 
+            Grid.Row="1" 
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            CornerRadius="10" 
+            ClipToBounds="True">
+            
+            <controls:ExoPlayerHost HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch" />
+        </Border>
+
+
+        <Border Grid.Row="2" 
+            HorizontalAlignment="Stretch" 
+            CornerRadius="10" 
+            Background="#3333">
+
+            <StackPanel Orientation="Horizontal"
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center"
+                Margin="0 5 0 0">
+
+                <Button Content="R" 
+                    Width="30" 
+                    Height="30" 
+                    Padding="5"
+                    Margin="5"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Transparent"
+                    Background="#FAAA"
+                    IsEnabled="{Binding ToggleCamera}"
+                    Command="{Binding ReloadCommand}" />
+                <Button Content="Switch" 
+                    Width="100" 
+                    Height="30" 
+                    Padding="5"
+                    Margin="5"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Transparent"
+                    Background="#FAAA"
+                    IsEnabled="{Binding ToggleCamera}"
+                    Command="{Binding SwitchCamCommand}" />
+                <ToggleButton Content="Toggle" 
+                    Width="100" 
+                    Height="30" 
+                    Padding="5"
+                    Margin="5"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Transparent"
+                    Background="#FAAA"
+                    IsChecked="{Binding ToggleCamera, Mode=TwoWay}" />            
+            </StackPanel> 
+        </Border>
+    </Grid>
+</UserControl>

@@ -8,6 +8,6 @@ public static class ServiceCollectionExtensions
     {
         collection.AddSingleton<Store>();
 
-        collection.AddSingleton<IPlayerViewModel, PlayerViewModel>();
+        collection.AddTransient<IPlayerViewModel, PlayerViewModel>();
     }
 }

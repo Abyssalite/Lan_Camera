@@ -8,5 +8,5 @@
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 	
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-	<application android:label="Esp32_Display_Connect" android:icon="@drawable/Icon" android:usesCleartextTraffic="true" android:allowBackup="true" android:supportsRtl="true" android:enableOnBackInvokedCallback="false"/>
+	<application android:label="Lan_Camera" android:icon="@drawable/Icon" android:usesCleartextTraffic="true" android:allowBackup="true" android:supportsRtl="true" android:enableOnBackInvokedCallback="false"/>
 </manifest>

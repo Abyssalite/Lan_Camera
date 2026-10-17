@@ -58,8 +58,6 @@ public partial class SelectViewModel : ViewModelBase
         _store.SelectCamera(camera);
 
         var vm = App.Services?.GetRequiredService<IPlayerViewModel>();
-        Console.WriteLine(App.Services?.GetRequiredService<IPlayerViewModel>());
-
-        await _navigator.NavigateMain(vm);     
+        await _navigator.NavigateMain(vm);  
     }
 }
