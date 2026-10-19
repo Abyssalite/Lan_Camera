@@ -12,6 +12,7 @@ using LibVLCSharp.Shared;
 
 using Lan_Camera.ViewModels;
 using Lan_Camera.Service;
+using System.Threading;
 namespace Lan_Camera.Desktop.ViewModels;
 
 public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IPlayerViewModel
@@ -48,6 +49,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
 
     public ICommand? SwitchCamCommand { get; }
     public ICommand? ReloadCommand { get; }
+    private readonly CancellationTokenSource _cts = new();
 
     private string _rtspUrl = "";
     private string _baseUrl = "";
@@ -69,6 +71,17 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
         ReloadCommand = new AsyncRelayCommand(ReloadAsync);
 
         InitPlayer();
+        _ = AutoRefreshAsync(_cts.Token);
+    }
+
+    private async Task AutoRefreshAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
+
+        while (await timer.WaitForNextTickAsync(cancellationToken))
+        {
+            await ReloadAsync();
+        }
     }
     
     private void InitPlayer()
@@ -91,7 +104,6 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
 
     private void Play()
     {
-        Stop();
         if (_mediaPlayer == null || _libVLC == null) return;
 
         using var media = new Media(_libVLC, _rtspUrl, FromType.FromLocation);
@@ -102,18 +114,23 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
 
     private async Task ReloadAsync()
     {
+        if (ToggleCamera != true) return;
         try
         {
             var status = await _http.GetAsync($"{_baseUrl}/status");
             status.EnsureSuccessStatusCode();
             var body = await status.Content.ReadAsStringAsync(); 
-            Console.WriteLine(body);
-            
-            View = $"{JsonSerializer.Deserialize<Respond>(body)?.Current ?? "none"}";
-            if (Enum.TryParse<Selection>(View, out var s))
+
+            var tmp = $"{JsonSerializer.Deserialize<Respond>(body)?.Current}";
+            if (View == tmp) return;
+            Stop();
+            if (Enum.TryParse<Selection>(tmp, out var s))
+            {
                 _viewSelect = (int)s;
-            
-            Play();
+                View = tmp;
+                await RetryAsync();
+                Play();
+            }
         }
         catch (Exception ex)
         {
@@ -121,24 +138,34 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
         }
     }
 
+    private async Task<string> RetryAsync()
+    {
+        string body;
+        var i = 0;
+        do
+        {
+            i++;
+            var status = await _http.GetAsync($"{_baseUrl}/status");
+            status.EnsureSuccessStatusCode();
+            body = await status.Content.ReadAsStringAsync(); 
+            Console.WriteLine(body);
+            await Task.Delay(200);
+        }
+        while (JsonSerializer.Deserialize<Respond>(body)?.Ready != true && i < 11);
+        return JsonSerializer.Deserialize<Respond>(body)?.Current ?? "none";
+    }
+
     private async Task SwitchCamAsync()
     {
         try
         {
+            Stop();
             _viewSelect = (_viewSelect + 1) % Enum.GetNames(typeof(Selection)).Length;
-            var response = await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
+            var r = await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
+            r.EnsureSuccessStatusCode();
 
-            string body = "";
-            do
-            {
-                var status = await _http.GetAsync($"{_baseUrl}/status");
-                status.EnsureSuccessStatusCode();
-                body = await status.Content.ReadAsStringAsync(); 
-                Console.WriteLine(body);
-                await Task.Delay(200);
-            }
-            while (JsonSerializer.Deserialize<Respond>(body)?.Ready != true);
             View = $"{(Selection)_viewSelect}";
+            await RetryAsync();
             Play();
         }
         catch (Exception ex)
@@ -160,18 +187,8 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
             else
             {
                 await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
-
-                string body = "";
-                do
-                {
-                    var status = await _http.GetAsync($"{_baseUrl}/status");
-                    status.EnsureSuccessStatusCode();
-                    body = await status.Content.ReadAsStringAsync(); 
-                    Console.WriteLine(body);
-                    await Task.Delay(200);
-                }
-                while (JsonSerializer.Deserialize<Respond>(body)?.Ready != true);
                 View = $"{(Selection)_viewSelect}";
+                await RetryAsync();
                 Play();
             }
         }
