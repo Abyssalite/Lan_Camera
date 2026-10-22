@@ -9,10 +9,10 @@ using Custom_EventHub;
 using Custom_Navigation;
 using Custom_Popup;
 using LibVLCSharp.Shared;
+using System.Threading;
 
 using Lan_Camera.ViewModels;
 using Lan_Camera.Service;
-using System.Threading;
 namespace Lan_Camera.Desktop.ViewModels;
 
 public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IPlayerViewModel
@@ -33,6 +33,19 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
     }
     private int _viewSelect = 0;
 
+    private bool? _toggleNight  = false;
+    public bool? ToggleNight
+    { 
+        get => _toggleNight;
+        set
+        {
+            if (value == null || value == _toggleNight) return;
+
+            _toggleNight = value;
+            _ = ToggleCamAsync(_toggleCamera ?? false, _toggleNight ?? false);
+            OnPropertyChanged(nameof(ToggleNight));
+        }
+    }
     private bool? _toggleCamera  = false;
     public bool? ToggleCamera 
     { 
@@ -42,7 +55,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
             if (value == null || value == _toggleCamera) return;
 
             _toggleCamera = value;
-            _ = ToggleCamAsync(_toggleCamera ?? false);
+            _ = ToggleCamAsync(_toggleCamera ?? false, _toggleNight ?? false);
             OnPropertyChanged(nameof(ToggleCamera));
         }
     }
@@ -121,6 +134,13 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
             status.EnsureSuccessStatusCode();
             var body = await status.Content.ReadAsStringAsync(); 
 
+            var night = JsonSerializer.Deserialize<Respond>(body)?.Night;
+            if (ToggleNight != night)
+            {
+                _toggleNight = night ?? false;
+                OnPropertyChanged(nameof(ToggleNight));
+            }
+            
             var tmp = $"{JsonSerializer.Deserialize<Respond>(body)?.Current}";
             if (View == tmp) return;
             Stop();
@@ -174,7 +194,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
         }
     }
 
-    private async Task ToggleCamAsync(bool isCameraOn)
+    private async Task ToggleCamAsync(bool isCameraOn, bool isNight)
     {
         try
         {
@@ -186,7 +206,8 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
             }
             else
             {
-                await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
+                var night = isNight ? "true" : "false";
+                await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}&night={night}");
                 View = $"{(Selection)_viewSelect}";
                 await RetryAsync();
                 Play();

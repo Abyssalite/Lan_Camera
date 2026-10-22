@@ -11,10 +11,11 @@ using Custom_Popup;
 using AndroidX.Media3.Common;
 using AndroidX.Media3.ExoPlayer;
 using AndroidX.Media3.UI;
+using AndroidX.Media3.ExoPlayer.Rtsp;
+using System.Threading;
 
 using Lan_Camera.ViewModels;
 using Lan_Camera.Service;
-using System.Threading;
 namespace Lan_Camera.Android.ViewModels;
 
 public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IPlayerViewModel
@@ -34,6 +35,19 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
     }
     private int _viewSelect = 0;
 
+    private bool? _toggleNight  = false;
+    public bool? ToggleNight
+    { 
+        get => _toggleNight;
+        set
+        {
+            if (value == null || value == _toggleNight) return;
+
+            _toggleNight = value;
+            _ = ToggleCamAsync(_toggleCamera ?? false, _toggleNight ?? false);
+            OnPropertyChanged(nameof(ToggleNight));
+        }
+    }
     private bool? _toggleCamera  = false;
     public bool? ToggleCamera 
     { 
@@ -43,7 +57,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
             if (value == null || value == _toggleCamera) return;
 
             _toggleCamera = value;
-            _ = ToggleCamAsync(_toggleCamera ?? false);
+            _ = ToggleCamAsync(_toggleCamera ?? false, _toggleNight ?? false);
             OnPropertyChanged(nameof(ToggleCamera));
         }
     }
@@ -52,7 +66,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
     public ICommand? ReloadCommand { get; }
     private readonly CancellationTokenSource _cts = new();
 
-    private string _hlsUrl = "";
+    private string _rtspUrl = "";
     private string _baseUrl = "";
     public PlayerViewModel(
         Store store,
@@ -65,7 +79,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
         if (SelectedCamera == null) return;
 
         var address = SelectedCamera.Address.Trim();
-        _hlsUrl = $"http://{address}:8888/cam/main_stream.m3u8";
+        _rtspUrl = $"rtsp://{address}:8554/cam";
         _baseUrl = $"http://{address}:5000";
 
         SwitchCamCommand = new AsyncRelayCommand(SwitchCamAsync);
@@ -107,8 +121,10 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
     {
         if (_player == null) return;
 
-        var mediaItem = MediaItem.FromUri(_hlsUrl);
-        _player.SetMediaItem(mediaItem);
+        var mediaItem = MediaItem.FromUri(_rtspUrl);
+        var dataSourceFactory = new RtspMediaSource.Factory();
+        var source = dataSourceFactory.CreateMediaSource(mediaItem);
+        _player.SetMediaSource(source);
         _player.Prepare();
         _player.PlayWhenReady = true;
     }
@@ -122,6 +138,13 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
             status.EnsureSuccessStatusCode();
             var body = await status.Content.ReadAsStringAsync(); 
             
+            var night = JsonSerializer.Deserialize<Respond>(body)?.Night;
+            if (ToggleNight != night)
+            {
+                _toggleNight = night ?? false;
+                OnPropertyChanged(nameof(ToggleNight));
+            }
+
             var tmp = $"{JsonSerializer.Deserialize<Respond>(body)?.Current}";
             if (View == tmp) return;
             Stop();
@@ -174,7 +197,7 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
         }
     }
 
-    private async Task ToggleCamAsync(bool isCameraOn)
+    private async Task ToggleCamAsync(bool isCameraOn, bool isNight)
     {
         try
         {
@@ -186,8 +209,8 @@ public partial class PlayerViewModel : ViewModelBase, IHandleBackNavigation , IP
             }
             else
             {
-                await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}");
-                View = $"{(Selection)_viewSelect}";
+                var night = isNight ? "true" : "false";
+                await _http.GetAsync($"{_baseUrl}/switch?cam={(Selection)_viewSelect}&night={night}");                View = $"{(Selection)_viewSelect}";
                 await RetryAsync();
                 Play();
             }

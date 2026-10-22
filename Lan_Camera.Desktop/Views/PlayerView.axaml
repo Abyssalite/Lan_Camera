@@ -112,7 +112,18 @@
                     VerticalContentAlignment="Center"
                     BorderBrush="Transparent"
                     Background="#FAAA"
-                    IsChecked="{Binding ToggleCamera, Mode=TwoWay}" />            
+                    IsChecked="{Binding ToggleCamera, Mode=TwoWay}" />        
+                <ToggleButton Content="Night" 
+                    Width="110" 
+                    Height="40" 
+                    Padding="10"
+                    Margin="10"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    BorderBrush="Transparent"
+                    Background="#FAAA"
+                    IsEnabled="{Binding ToggleCamera}"
+                    IsChecked="{Binding ToggleNight, Mode=TwoWay}" />                
             </StackPanel> 
         </Border>
     </Grid>

@@ -24,7 +24,6 @@
     <PackageVersion Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.15" />
     <PackageVersion Include="Xamarin.AndroidX.Media3.Common" Version="1.11.1" />
     <PackageVersion Include="Xamarin.AndroidX.Media3.ExoPlayer" Version="1.11.1" />
-    <PackageVersion Include="Xamarin.AndroidX.Media3.ExoPlayer.Hls" Version="1.11.1" />
     <PackageVersion Include="Xamarin.AndroidX.Media3.ExoPlayer.Rtsp" Version="1.11.1" />
     <PackageVersion Include="Xamarin.AndroidX.Media3.Ui" Version="1.11.1" />
   </ItemGroup>
